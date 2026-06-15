@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sri's Meditation Timer</title>
+  <title>Meditation Timer</title>
   <style>
     * {
       box-sizing: border-box;
@@ -113,13 +113,13 @@
       width: 90%;
       max-width: 500px;
       display: flex;
-      justify-content: space-around;
-      background: rgba(5, 5, 15, 0.4);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      padding: 15px 10px;
+      align-items: center;
+      background: rgba(10, 10, 25, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 12px 15px;
       border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       text-align: center;
       opacity: 0;
       visibility: hidden;
@@ -136,37 +136,37 @@
     }
 
     .stat-label {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       color: #8a99ad;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .stat-value {
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 300;
       color: #ffffff;
       font-variant-numeric: tabular-nums;
     }
 
-    /* Tap Screen to Pause notice at the bottom */
-    #tapHint {
-      position: absolute;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2;
+    /* Integrated Small Pause Button */
+    #pauseBtn {
+      width: auto;
+      margin: 0 0 0 10px;
+      padding: 10px 18px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
       font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.3);
       letter-spacing: 1px;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-      pointer-events: none;
+      font-weight: bold;
+      color: #ffffff;
+      transition: background 0.2s;
     }
 
-    #tapHint.visible {
-      opacity: 1;
+    #pauseBtn:active {
+      background: rgba(255, 255, 255, 0.3);
     }
   </style>
 </head>
@@ -189,9 +189,9 @@
       <div class="stat-label">Remaining</div>
       <div id="valRemaining" class="stat-value">00:00</div>
     </div>
-  </div>
 
-  <p id="tapHint">Tap anywhere to pause</p>
+    <button id="pauseBtn">PAUSE</button>
+  </div>
 
   <div id="ui" class="ui-container">
     <h1 id="menuTitle">Meditation</h1>
@@ -210,13 +210,13 @@
     // --- Core UI Variables ---
     const ui = document.getElementById('ui');
     const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
     const menuTitle = document.getElementById('menuTitle');
     const durationInput = document.getElementById('duration');
     const intervalsInput = document.getElementById('intervals');
 
     // Dashboard metric fields
     const dashboard = document.getElementById('dashboard');
-    const tapHint = document.getElementById('tapHint');
     const valElapsed = document.getElementById('valElapsed');
     const valNextBeep = document.getElementById('valNextBeep');
     const valRemaining = document.getElementById('valRemaining');
@@ -250,7 +250,6 @@
       osc.stop(audioCtx.currentTime + 3);
     }
 
-    // Helper string formatter (converts seconds to MM:SS format)
     function formatTime(sec) {
       if (sec < 0 || isNaN(sec)) return "--:--";
       const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -258,9 +257,8 @@
       return `${m}:${s}`;
     }
 
-    // Primary Action Controller
-    startBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // Stop click from bleeding into window backdrop
+    // Start / Resume Button Controller
+    startBtn.addEventListener('click', () => {
       initAudio();
 
       if (!isPaused) {
@@ -272,7 +270,7 @@
           .split(',')
           .map(val => Math.round(parseFloat(val.trim()) * 60))
           .filter(val => !isNaN(val) && val > 0 && val < totalSeconds)
-          .sort((a, b) => a - b); // Keep numerical order intact
+          .sort((a, b) => a - b);
 
         playChime();
       }
@@ -282,14 +280,13 @@
 
       ui.classList.add('hidden');
       dashboard.classList.add('visible');
-      tapHint.classList.add('visible');
 
       updateDashboardUI();
       timerInterval = setInterval(tick, 1000);
     });
 
-    // Tap Backdrop to Pause System
-    window.addEventListener('click', () => {
+    // Explicit Pause Button Controller (Mobile Tapping Safe)
+    pauseBtn.addEventListener('click', () => {
       if (isRunning) {
         clearInterval(timerInterval);
         isRunning = false;
@@ -300,7 +297,6 @@
 
         ui.classList.remove('hidden');
         dashboard.classList.remove('visible');
-        tapHint.classList.remove('visible');
       }
     });
 
@@ -318,11 +314,8 @@
       }
     }
 
-    // Live Math Metrics Update Controller
     function updateDashboardUI() {
       const timeRemaining = totalSeconds - secondsElapsed;
-
-      // Look up the next scheduled chime in the timestamp layout array
       const nextChimeIndex = intervalTimestamps.find(time => time > secondsElapsed);
       const timeUntilNextBeep = nextChimeIndex ? (nextChimeIndex - secondsElapsed) : -1;
 
@@ -344,7 +337,6 @@
 
       ui.classList.remove('hidden');
       dashboard.classList.remove('visible');
-      tapHint.classList.remove('visible');
     }
 
 
